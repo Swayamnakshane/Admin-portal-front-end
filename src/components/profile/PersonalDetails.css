@@ -1,0 +1,16 @@
+.container-fluid {
+  background-color: #ffffff;
+  padding: 2rem;
+  border-radius: 10px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+  max-width: 100%;
+}
+
+input.form-control:disabled {
+  background-color: #f0f0f0;
+  color: #555;
+}
+
+label.form-label {
+  font-weight: 500;
+}

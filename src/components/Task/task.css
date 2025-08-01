@@ -1,0 +1,10 @@
+.cursor-pointer {
+  cursor: pointer;
+}
+.badge {
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+.table th, .table td {
+  vertical-align: middle;
+}
