@@ -7,7 +7,7 @@ import {
 import { 
   FaTasks, FaClock, FaFileAlt, FaUserGraduate, 
   FaProjectDiagram, FaCalendarAlt, FaChartLine, 
-  FaUsers, FaSyncAlt, FaBriefcase, FaIndustry,
+  FaUsers, FaSyncAlt, FaIndustry,
   FaExclamationTriangle, FaTools
 } from 'react-icons/fa';
 import { Link } from 'react-router-dom';

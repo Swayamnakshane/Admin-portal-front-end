@@ -8,7 +8,7 @@ import {
   FaVideo,
   FaClock,
   FaTasks,
-  FaUserFriends,
+  
   FaCalendarAlt,
   FaEllipsisV,
   FaPlayCircle

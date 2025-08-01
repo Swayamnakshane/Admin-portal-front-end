@@ -5,7 +5,7 @@ import {
 } from "react-bootstrap";
 import { 
   FaBookOpen, FaUserGraduate, FaCheckCircle, 
-  FaRegClock, FaSyncAlt, FaCalendarAlt, FaCertificate
+  FaRegClock, FaSyncAlt, FaCertificate
 } from "react-icons/fa";
 import moment from "moment";
 import { toast, ToastContainer } from "react-toastify";
