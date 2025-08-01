@@ -8,7 +8,6 @@ import {
   FaVideo,
   FaClock,
   FaTasks,
-  
   FaCalendarAlt,
   FaEllipsisV,
   FaPlayCircle
@@ -70,14 +69,18 @@ const Meetings = () => {
   }, []);
 
   // Handle meeting actions
-  const handleMeetingAction = (action, meeting) => {
-    switch (action) {
-      case "join":
-        window.open(meeting.link, "_blank");
-        toast.info("Joining meeting...");
-     
-    }
-  };
+  // Add default case to switch statement
+const handleMeetingAction = (action, meeting) => {
+  switch (action) {
+    case "join":
+      window.open(meeting.link, "_blank");
+      toast.info("Joining meeting...");
+      break; // Add break
+    default: // Add default case
+      toast.warn("Unknown action");
+      break;
+  }
+};
 
   // Refresh meetings data
   const handleRefresh = () => {

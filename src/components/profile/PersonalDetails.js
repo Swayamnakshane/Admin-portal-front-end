@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import api from "../../api/api";
 import { ToastContainer, toast } from "react-toastify";
@@ -82,26 +81,33 @@ const PersonalDetails = () => {
     return true;
   };
 
-  const handleSubmit = async () => {
-    if (!validateForm()) return;
-    const [yyyy, mm, dd] = form.date_of_birth.split("-");
-    const ddmmyyyy = `${dd}/${mm}/${yyyy}`;
-    const formattedForm = { ...form, date_of_birth: ddmmyyyy };
+  // Remove unused 'res' variable
+// Replace the handleSubmit function with this corrected version
+const handleSubmit = async () => {
+  if (!validateForm()) return;
+  
+  setButtonDisabled(true);
+  const method = isExistingData ? "put" : "post";
+  const endpoint = method === "post" ? "/employee/personal-details" : "/employee/personal-details/update";
 
-    setButtonDisabled(true);
-    const method = isExistingData ? "put" : "post";
-    const endpoint = method === "post" ? "/employee/personal-details" : "/employee/personal-details/update";
-
-    try {
-      const res = await api[method](endpoint, formattedForm);
-      toast.success(`✅ ${isExistingData ? "Details updated" : "Details submitted"} successfully.`);
-      setIsExistingData(true);
-    } catch (err) {
-      toast.error(err.response?.data?.message || "❌ Something went wrong.");
-    } finally {
-      setButtonDisabled(false);
-    }
+  // Create formattedForm with properly formatted date
+  const formattedForm = {
+    ...form,
+    date_of_birth: form.date_of_birth
+      ? form.date_of_birth.split("-").reverse().join("-")
+      : ""
   };
+
+  try {
+    await api[method](endpoint, formattedForm);
+    toast.success(`✅ ${isExistingData ? "Details updated" : "Details submitted"} successfully.`);
+    setIsExistingData(true);
+  } catch (err) {
+    toast.error(err.response?.data?.message || "❌ Something went wrong.");
+  } finally {
+    setButtonDisabled(false);
+  }
+};
 
   if (isLoading) return <div className="text-center mt-5">Loading personal details...</div>;
 

@@ -28,7 +28,8 @@ const Login = () => {
         password,
       });
 
-      const { access_token, refresh_token, message, name, employee_id } = res.data;
+      // Removed unused 'message' variable
+      const { access_token, refresh_token, name, employee_id } = res.data;
 
       localStorage.setItem("access_token", access_token);
       localStorage.setItem("refresh_token", refresh_token);
@@ -44,6 +45,11 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Helper function to show placeholder toast
+  const showPlaceholderToast = (feature) => {
+    toast.info(`${feature} feature is coming soon!`);
   };
 
   return (
@@ -193,9 +199,13 @@ const Login = () => {
                   Keep me logged in
                 </label>
               </div>
-              <a href="#" className="text-decoration-none text-primary fw-medium">
+              {/* Replaced anchor with button */}
+              <button 
+                className="text-decoration-none text-primary fw-medium bg-transparent border-0 p-0"
+                onClick={() => showPlaceholderToast("Forgot password")}
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <button
@@ -245,22 +255,35 @@ const Login = () => {
               <div style={{ flex: 1, height: "1px", backgroundColor: "#e9ecef" }}></div>
             </div>
             
-            <button className="btn btn-outline-secondary w-100 py-2 mb-3">
+            <button 
+              className="btn btn-outline-secondary w-100 py-2 mb-3"
+              onClick={() => showPlaceholderToast("Google sign-in")}
+            >
               <i className="bi bi-google me-2"></i> Sign in with Google
             </button>
           </div>
           
           <div className="text-center border-top pt-4">
             <div className="d-flex justify-content-center gap-4 mb-3">
-              <a href="#" className="text-decoration-none text-secondary">
+              {/* Replaced anchors with buttons */}
+              <button 
+                className="text-decoration-none text-secondary bg-transparent border-0 p-0"
+                onClick={() => showPlaceholderToast("Security")}
+              >
                 <i className="bi bi-shield-lock me-1"></i> Security
-              </a>
-              <a href="#" className="text-decoration-none text-secondary">
+              </button>
+              <button 
+                className="text-decoration-none text-secondary bg-transparent border-0 p-0"
+                onClick={() => showPlaceholderToast("Privacy")}
+              >
                 <i className="bi bi-file-earmark-text me-1"></i> Privacy
-              </a>
-              <a href="#" className="text-decoration-none text-secondary">
+              </button>
+              <button 
+                className="text-decoration-none text-secondary bg-transparent border-0 p-0"
+                onClick={() => showPlaceholderToast("Help")}
+              >
                 <i className="bi bi-info-circle me-1"></i> Help
-              </a>
+              </button>
             </div>
             <p className="text-muted small mb-0">
               © {new Date().getFullYear()} Arcap Technologies Inc. All rights reserved.

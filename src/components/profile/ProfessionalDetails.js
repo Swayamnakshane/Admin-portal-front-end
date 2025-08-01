@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import api from "../../api/api";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -20,9 +20,11 @@ const backendToInputDate = (dateStr) => {
   return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
 };
 
+// ... existing imports ...
+
 const ProfessionalDetails = () => {
-  // Initial form state
-  const initialFormState = {
+  // Memoize initial form state
+  const initialFormState = useMemo(() => ({
     education: "",
     specialization: "",
     college_name: "",
@@ -40,7 +42,10 @@ const ProfessionalDetails = () => {
     portfolio_website: "",
     bio: "",
     previous_experiences: []
-  };
+  }), []); // Empty dependency array means it's created only once
+
+  // Rest of the component code remains the same...
+
 
   const [form, setForm] = useState(initialFormState);
   const [experience, setExperience] = useState({
@@ -93,7 +98,7 @@ const ProfessionalDetails = () => {
     };
     
     fetchDetails();
-  }, []);
+  }, [initialFormState]);
 
   // Handle main form changes
   const handleFormChange = (e) => {

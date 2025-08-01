@@ -31,17 +31,17 @@ const Task = () => {
     }
   };
 
-  const updateStatus = async (taskId, status) => {
-    try {
-      const res = await api.put(`/employee/update-task-status/${taskId}`, {
-        status,
-      });
-      toast.success(`Task marked as ${status}`);
-      fetchTasks();
-    } catch (err) {
-      toast.error("Failed to update task status.");
-    }
-  };
+  // Remove unused 'res' variable
+const updateStatus = async (taskId, status) => {
+  try {
+    await api.put(`/employee/update-task-status/${taskId}`, { status });
+    // Remove 'res' variable
+    toast.success(`Task marked as ${status}`);
+    fetchTasks();
+  } catch (err) {
+    toast.error("Failed to update task status.");
+  }
+};
 
   useEffect(() => {
     fetchTasks();
