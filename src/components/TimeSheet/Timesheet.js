@@ -5,7 +5,7 @@ import {
   Alert, Spinner
 } from "react-bootstrap";
 import { 
-  FaCheckCircle,  FaTasks, FaSyncAlt, 
+  FaCheckCircle, FaTasks, FaSyncAlt, 
   FaChevronDown, FaExclamationTriangle, FaPlus, 
   FaTrash, FaEdit, FaCalendarAlt, FaChartLine,
   FaHourglassHalf, FaRegClock, FaRegCalendarAlt,
@@ -37,6 +37,8 @@ const TimeSheet = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [totalHours, setTotalHours] = useState(0);
+  const [canAddMore, setCanAddMore] = useState(true);
 
   // Status badge variants
   const statusVariants = {
@@ -51,6 +53,30 @@ const TimeSheet = () => {
     Approved: <FaCheckCircle />,
     Rejected: <FaExclamationTriangle />
   };
+
+  // Calculate total hours whenever timeslots change
+  useEffect(() => {
+    if (isEditing) {
+      let totalMinutes = 0;
+      timesheet.time_slots.forEach(slot => {
+        const start = moment(slot.start_time, "HH:mm");
+        const end = moment(slot.end_time, "HH:mm");
+        if (start.isValid() && end.isValid()) {
+          totalMinutes += end.diff(start, "minutes");
+        }
+      });
+      const calculatedHours = parseFloat((totalMinutes / 60).toFixed(2));
+      setTotalHours(calculatedHours);
+      setCanAddMore(calculatedHours < 8);
+    } else if (dailyData) {
+      const hours = parseFloat(dailyData.total_hours);
+      setTotalHours(hours);
+      setCanAddMore(hours < 8);
+    } else {
+      setTotalHours(0);
+      setCanAddMore(true);
+    }
+  }, [timesheet.time_slots, isEditing, dailyData]);
 
   // Fetch timesheet data on mount and date change
   useEffect(() => {
@@ -67,7 +93,6 @@ const TimeSheet = () => {
         setDailyData(dailyRes.data);
         setSummary(summaryRes.data);
       } catch (err) {
-        // Handle 404 for no timesheet entry
         if (err.response?.status === 404) {
           setDailyData(null);
         } else {
@@ -87,18 +112,12 @@ const TimeSheet = () => {
     setIsEditing(false);
   }, [timesheet.date]);
 
-  // Handle input changes
-  // const handleInputChange = (e) => {
-  //   const { name, value } = e.target;
-  //   setTimesheet(prev => ({ ...prev, [name]: value }));
-  // };
-
   // Handle timeslot changes
   const handleSlotChange = (index, field, value) => {
     const updatedSlots = [...timesheet.time_slots];
     updatedSlots[index][field] = value;
     
-    // Auto-adjust subsequent slots if start time changes
+    // Auto-adjust subsequent slots if end time changes
     if (field === "end_time" && index < updatedSlots.length - 1) {
       const currentEnd = moment(value, "HH:mm");
       const nextStart = moment(updatedSlots[index + 1].start_time, "HH:mm");
@@ -111,8 +130,13 @@ const TimeSheet = () => {
     setTimesheet(prev => ({ ...prev, time_slots: updatedSlots }));
   };
 
-  // Add new timeslot
+  // Add new timeslot only if total hours < 8
   const addTimeSlot = () => {
+    if (!canAddMore) {
+      toast.warning("You have reached 8 hours. Cannot add more time slots.");
+      return;
+    }
+    
     const lastSlot = timesheet.time_slots[timesheet.time_slots.length - 1];
     const lastEndTime = lastSlot ? moment(lastSlot.end_time, "HH:mm") : moment("09:00", "HH:mm");
     
@@ -141,7 +165,6 @@ const TimeSheet = () => {
   const validateForm = () => {
     const errors = {};
     const today = moment().format("YYYY-MM-DD");
-    let totalMinutes = 0;
     
     // Validate date (only today allowed for submission)
     if (timesheet.date !== today) {
@@ -161,7 +184,6 @@ const TimeSheet = () => {
       // Calculate duration
       const duration = end.diff(start, "minutes");
       if (duration <= 0) errors[`slot_duration_${index}`] = "Invalid time duration";
-      totalMinutes += duration;
       
       // Check for overlapping slots
       if (index > 0) {
@@ -173,7 +195,6 @@ const TimeSheet = () => {
     });
     
     // Validate total hours (8 hours = 480 minutes)
-    const totalHours = totalMinutes / 60;
     if (totalHours < 7.9) {
       errors.total = `Total hours (${totalHours.toFixed(2)}) must be at least 8 hours`;
     } else if (totalHours > 12) {
@@ -262,29 +283,13 @@ const TimeSheet = () => {
     setIsEditing(true);
   };
 
-  // Calculate total hours
-  const calculateTotalHours = () => {
-    if (dailyData) return dailyData.total_hours;
-    
-    let totalMinutes = 0;
-    timesheet.time_slots.forEach(slot => {
-      const start = moment(slot.start_time, "HH:mm");
-      const end = moment(slot.end_time, "HH:mm");
-      totalMinutes += end.diff(start, "minutes");
-    });
-    
-    return (totalMinutes / 60).toFixed(2);
-  };
-
   // Calculate progress percentage
   const calculateProgress = () => {
-    const totalHours = parseFloat(calculateTotalHours());
     return Math.min(100, (totalHours / 8) * 100);
   };
 
   // Get progress variant
   const getProgressVariant = () => {
-    const totalHours = parseFloat(calculateTotalHours());
     if (totalHours >= 8) return "success";
     if (totalHours >= 6) return "info";
     return "warning";
@@ -295,7 +300,9 @@ const TimeSheet = () => {
     timesheet.time_slots.map((slot, index) => {
       const start = moment(slot.start_time, "HH:mm");
       const end = moment(slot.end_time, "HH:mm");
-      const duration = end.diff(start, "minutes") / 60;
+      const duration = start.isValid() && end.isValid() 
+        ? end.diff(start, "minutes") / 60 
+        : 0;
       
       return (
         <div key={index} className="time-slot mb-3 p-3 border rounded bg-light position-relative">
@@ -445,7 +452,7 @@ const TimeSheet = () => {
                   Today's Progress
                 </div>
                 <div className="h5 mb-0 fw-bold text-gray-800">
-                  {calculateTotalHours()}/8 hrs
+                  {totalHours.toFixed(2)}/8 hrs
                 </div>
                 <ProgressBar 
                   now={calculateProgress()} 
@@ -471,6 +478,7 @@ const TimeSheet = () => {
   const renderDailyContent = () => {
     const today = moment().format("YYYY-MM-DD");
     const isToday = timesheet.date === today;
+    const isEndOfDay = moment().isAfter(moment().endOf('day'));
     
     if (isEditing) {
       return (
@@ -532,19 +540,25 @@ const TimeSheet = () => {
           
           {renderTimeSlots()}
           
-          <Button 
-            variant="outline-primary" 
-            onClick={addTimeSlot}
-            className="mt-2 fw-bold"
-          >
-            <FaPlus className="mr-1" /> Add Time Slot
-          </Button>
+          <div className="d-flex justify-content-between align-items-center mt-3">
+            <Button 
+              variant="outline-primary" 
+              onClick={addTimeSlot}
+              className="fw-bold"
+              disabled={!canAddMore}
+            >
+              <FaPlus className="mr-1" /> Add Time Slot
+            </Button>
+            
+            <div className="fw-bold text-primary">
+              Total Hours: {totalHours.toFixed(2)} / 8
+            </div>
+          </div>
         </Form>
       );
     }
     
     if (dailyData) {
-      const totalHours = parseFloat(dailyData.total_hours);
       const isFullShift = totalHours >= 8;
       const statusVariant = statusVariants[dailyData.status] || "secondary";
       
@@ -585,7 +599,7 @@ const TimeSheet = () => {
             <div className="d-flex align-items-center">
               <FaChartLine className="text-primary me-2" />
               <span className="fw-bold me-1">Total:</span>
-              <span>{dailyData.total_hours} hrs</span>
+              <span>{totalHours.toFixed(2)} hrs</span>
             </div>
           </div>
           
@@ -615,7 +629,7 @@ const TimeSheet = () => {
               })}
               <tr className="fw-bold">
                 <td colSpan="2" className="text-end">Total Hours:</td>
-                <td>{dailyData.total_hours} hrs</td>
+                <td>{totalHours.toFixed(2)} hrs</td>
                 <td>
                   {isFullShift ? (
                     <Badge pill bg="success" className="px-3 py-2">
@@ -624,7 +638,7 @@ const TimeSheet = () => {
                   ) : (
                     <Badge pill bg="warning" className="px-3 py-2">
                       <FaExclamationTriangle className="mr-1" />
-                      Partial Shift ({8 - totalHours} hrs short)
+                      Partial Shift ({(8 - totalHours).toFixed(2)} hrs short)
                     </Badge>
                   )}
                 </td>
@@ -632,7 +646,7 @@ const TimeSheet = () => {
             </tbody>
           </Table>
           
-          {isToday && dailyData.status === "Pending" && (
+          {isToday && !isEndOfDay && dailyData.status === "Pending" && (
             <div className="d-flex justify-content-end mt-3">
               <Button variant="primary" onClick={startEditing} className="fw-bold">
                 <FaEdit className="mr-1" /> Edit Timesheet
@@ -643,7 +657,7 @@ const TimeSheet = () => {
           {dailyData.status === "Pending" && (
             <Alert variant="warning" className="mt-3">
               <FaExclamationTriangle className="me-2" />
-              Your timesheet is pending approval. You can edit it until it's approved.
+              Your timesheet is pending approval. You can edit it until the end of the day.
             </Alert>
           )}
         </>
@@ -655,7 +669,7 @@ const TimeSheet = () => {
         <div className="text-center py-5">
           <FaTasks className="text-muted mb-3" size="3em" />
           <h5 className="text-muted mb-3">No timesheet recorded for this day</h5>
-          {isToday && (
+          {isToday && !isEndOfDay && (
             <Button 
               variant="primary" 
               onClick={() => setIsEditing(true)}
