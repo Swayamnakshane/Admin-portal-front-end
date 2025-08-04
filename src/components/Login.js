@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../api/api";
+
 import { useNavigate } from "react-router-dom";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap-icons/font/bootstrap-icons.css";
@@ -38,7 +39,7 @@ const Login = () => {
 
     try {
       setLoading(true);
-      const res = await axios.post("http://127.0.0.1:5000/employee/login", {
+      const res = await api.post("/employee/login", {
         email,
         password,
       });
@@ -87,9 +88,8 @@ const Login = () => {
     }}>
       {/* Left Section - Professional Banner */}
       <div className="d-none d-lg-flex col-lg-7 position-relative" style={{
-        background: "linear-gradient(135deg, #0d2c58 0%, #1a4a8a 100%)",
+        background: "#ffffff",
         overflow: "hidden",
-        color: "white"
       }}>
         {/* Floating elements */}
         <div className="position-absolute" style={{
@@ -98,7 +98,7 @@ const Login = () => {
           width: "400px",
           height: "400px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(25, 118, 210, 0.15) 0%, transparent 70%)"
+          background: "radial-gradient(circle, rgba(25, 118, 210, 0.08) 0%, transparent 70%)"
         }}></div>
         
         <div className="position-absolute" style={{
@@ -107,7 +107,7 @@ const Login = () => {
           width: "500px",
           height: "500px",
           borderRadius: "50%",
-          background: "radial-gradient(circle, rgba(33, 150, 243, 0.12) 0%, transparent 70%)"
+          background: "radial-gradient(circle, rgba(33, 150, 243, 0.06) 0%, transparent 70%)"
         }}></div>
         
         {/* Geometric pattern */}
@@ -117,7 +117,7 @@ const Login = () => {
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundImage: "radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px)",
+          backgroundImage: "radial-gradient(rgba(13, 110, 253, 0.05) 1px, transparent 1px)",
           backgroundSize: "30px 30px",
           opacity: 0.4
         }}></div>
@@ -131,16 +131,27 @@ const Login = () => {
                 alt="Arcap Company Logo"
                 style={{ 
                   height: "120px",
-                  filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.3))"
+                  filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.1))"
                 }}
               />
             </div>
             
-            <h1 className="display-3 fw-bold mb-4" style={{ lineHeight: 1.2 }}>
-              <span className="text-info">Arcap</span> Technologies
+            <h1 className="display-3 fw-bold mb-4" style={{ 
+              lineHeight: 1.2,
+              color: "#0d3b66",
+              fontWeight: 700,
+              letterSpacing: "-0.5px"
+            }}>
+              <span style={{ color: "#1a6fc4" }}>Arcap</span> Technologies
             </h1>
             
-            <p className="fs-4 mb-5 px-4" style={{ maxWidth: "800px", margin: "0 auto", opacity: 0.9 }}>
+            <p className="fs-4 mb-5 px-4" style={{ 
+              maxWidth: "800px", 
+              margin: "0 auto", 
+              color: "#1a6fc4",
+              fontWeight: 400,
+              lineHeight: 1.5
+            }}>
               Enterprise solutions for the modern workforce. Secure, reliable, and designed for productivity.
             </p>
           </div>
@@ -148,27 +159,39 @@ const Login = () => {
           {/* Stats */}
           <div className="d-flex gap-5 justify-content-center mt-5">
             <div className="text-center">
-              <div className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: "70px", height: "70px" }}>
-                <i className="bi bi-shield-check fs-2"></i>
+              <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ 
+                width: "70px", 
+                height: "70px", 
+                background: "rgba(25, 118, 210, 0.1)",
+                boxShadow: "0 4px 10px rgba(25, 118, 210, 0.15)"
+              }}>
+                <i className="bi bi-shield-check fs-2" style={{ color: "#0d47a1" }}></i>
               </div>
-              <h5 className="fw-bold">Enterprise Security</h5>
-              <p className="mb-0 opacity-75">Military-grade protection</p>
+              <div className="fw-medium" style={{ color: "#0d3b66" }}>Enterprise Security</div>
             </div>
             
             <div className="text-center">
-              <div className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: "70px", height: "70px" }}>
-                <i className="bi bi-people-fill fs-2"></i>
+              <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ 
+                width: "70px", 
+                height: "70px", 
+                background: "rgba(25, 118, 210, 0.1)",
+                boxShadow: "0 4px 10px rgba(25, 118, 210, 0.15)"
+              }}>
+                <i className="bi bi-people-fill fs-2" style={{ color: "#0d47a1" }}></i>
               </div>
-              <h5 className="fw-bold">Global Team</h5>
-              <p className="mb-0 opacity-75">15,000+ professionals</p>
+              <div className="fw-medium" style={{ color: "#0d3b66" }}>Global Workforce</div>
             </div>
             
             <div className="text-center">
-              <div className="bg-white text-primary rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ width: "70px", height: "70px" }}>
-                <i className="bi bi-award-fill fs-2"></i>
+              <div className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-3" style={{ 
+                width: "70px", 
+                height: "70px", 
+                background: "rgba(25, 118, 210, 0.1)",
+                boxShadow: "0 4px 10px rgba(25, 118, 210, 0.15)"
+              }}>
+                <i className="bi bi-award-fill fs-2" style={{ color: "#0d47a1" }}></i>
               </div>
-              <h5 className="fw-bold">Certified</h5>
-              <p className="mb-0 opacity-75">ISO 27001 Certified</p>
+              <div className="fw-medium" style={{ color: "#0d3b66" }}>Industry Leaders</div>
             </div>
           </div>
         </div>
@@ -178,31 +201,36 @@ const Login = () => {
       <div className="col-12 col-lg-5 d-flex align-items-center justify-content-center p-4" style={{
         background: "#ffffff",
         position: "relative",
-        overflow: "auto"
+        overflow: "auto",
+        boxShadow: "-5px 0 15px rgba(0, 0, 0, 0.05)"
       }}>
         <div className="w-100" style={{ maxWidth: "450px" }}>
           {/* Form Header */}
           <div className="text-center mb-5">
             <div className="d-flex justify-content-center mb-4">
-              <div className="bg-primary rounded-circle d-flex align-items-center justify-content-center" style={{ 
+              <div className="rounded-circle d-flex align-items-center justify-content-center" style={{ 
                 width: "80px", 
                 height: "80px",
+                background: "linear-gradient(135deg, #1a6fc4 0%, #0d47a1 100%)",
                 boxShadow: "0 4px 10px rgba(13, 71, 161, 0.3)"
               }}>
                 <i className="bi bi-person-badge-fill fs-1 text-white"></i>
               </div>
             </div>
             <h2 className="fw-bold mb-2" style={{ color: "#0d3b66" }}>Employee Portal</h2>
-            <p className="text-muted">Secure access to your digital workspace</p>
+            <p className="fs-5" style={{ color: "#1a6fc4" }}>Secure access to your digital workspace</p>
           </div>
           
           <form onSubmit={handleSubmit} className="mb-4">
             {/* Email Field */}
             <div className="mb-4">
-              <label className="form-label fw-medium text-secondary mb-2">Work Email</label>
-              <div className={`input-group border rounded-3 overflow-hidden ${focusedField === 'email' ? 'border-primary shadow-sm' : 'border-light'}`} style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+              <label className="form-label fw-medium mb-2" style={{ color: "#0d3b66" }}>Work Email</label>
+              <div className={`input-group border rounded-3 overflow-hidden ${focusedField === 'email' ? 'border-primary shadow-sm' : 'border-light'}`} style={{ 
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                borderColor: "#dee2e6 !important"
+              }}>
                 <span className="input-group-text bg-white border-0 pe-1">
-                  <i className="bi bi-envelope-fill text-primary fs-5"></i>
+                  <i className="bi bi-envelope-fill fs-5" style={{ color: "#1a6fc4" }}></i>
                 </span>
                 <input
                   type="email"
@@ -213,16 +241,23 @@ const Login = () => {
                   onFocus={() => setFocusedField('email')}
                   onBlur={() => setFocusedField(null)}
                   autoFocus
+                  style={{
+                    backgroundColor: "#fff",
+                    color: "#0d3b66"
+                  }}
                 />
               </div>
             </div>
 
             {/* Password Field */}
             <div className="mb-4">
-              <label className="form-label fw-medium text-secondary mb-2">Password</label>
-              <div className={`input-group border rounded-3 overflow-hidden ${focusedField === 'password' ? 'border-primary shadow-sm' : 'border-light'}`} style={{ boxShadow: "0 2px 4px rgba(0,0,0,0.05)" }}>
+              <label className="form-label fw-medium mb-2" style={{ color: "#0d3b66" }}>Password</label>
+              <div className={`input-group border rounded-3 overflow-hidden ${focusedField === 'password' ? 'border-primary shadow-sm' : 'border-light'}`} style={{ 
+                boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+                borderColor: "#dee2e6 !important"
+              }}>
                 <span className="input-group-text bg-white border-0 pe-1">
-                  <i className="bi bi-lock-fill text-primary fs-5"></i>
+                  <i className="bi bi-lock-fill fs-5" style={{ color: "#1a6fc4" }}></i>
                 </span>
                 <input
                   type="password"
@@ -232,6 +267,10 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   onFocus={() => setFocusedField('password')}
                   onBlur={() => setFocusedField(null)}
+                  style={{
+                    backgroundColor: "#fff",
+                    color: "#0d3b66"
+                  }}
                 />
               </div>
             </div>
@@ -252,7 +291,7 @@ const Login = () => {
                     borderColor: "#1a6fc4"
                   }}
                 />
-                <label className="form-check-label text-secondary ms-2" htmlFor="rememberMe" style={{ color: "#1a6fc4" }}>
+                <label className="form-check-label ms-2" htmlFor="rememberMe" style={{ color: "#0d3b66" }}>
                   Remember me
                 </label>
               </div>
@@ -313,7 +352,7 @@ const Login = () => {
           </form>
           
           {/* Footer */}
-          <div className="text-center border-top pt-4">
+          <div className="text-center border-top pt-4" style={{ borderColor: "#dee2e6 !important" }}>
             <div className="d-flex justify-content-center gap-4 mb-3">
               <button 
                 className="btn btn-link text-decoration-none p-0 fw-medium"
@@ -337,10 +376,10 @@ const Login = () => {
                 <i className="bi bi-info-circle me-1"></i> Help
               </button>
             </div>
-            <p className="text-muted small mb-0">
+            <p className="small mb-0" style={{ color: "#6c757d" }}>
               © {new Date().getFullYear()} Arcap Technologies Inc. All rights reserved.
             </p>
-            <p className="small text-muted mt-1">v2.7.0 • Secure Employee Portal</p>
+            <p className="small mt-1" style={{ color: "#6c757d" }}>v2.7.0 • Secure Employee Portal</p>
           </div>
         </div>
         

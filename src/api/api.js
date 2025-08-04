@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: "https://dashboard.arcapreit.com/",
+  baseURL: "https://dashboard.arcapreit.com/back",
 });
 
 api.interceptors.request.use((config) => {
