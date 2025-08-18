@@ -18,7 +18,7 @@ def create_app():
     # ✅ Allow all origins
     CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=True)
 
-    # JWT Setup
+    # JWT Setup (reads expiry values from config)
     jwt = JWTManager(app)
 
     # Register Blueprints

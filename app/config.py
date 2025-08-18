@@ -15,6 +15,10 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "default_secret_key")
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "default_jwt_secret_key")
 
+    # JWT Expiry Config
+    JWT_ACCESS_TOKEN_EXPIRES = timedelta(minutes=30)   # access token expires in 15 minutes
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=7)      # refresh token expires in 7 days
+
     # AWS S3 Configuration
     AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")
     AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY")

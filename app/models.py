@@ -104,6 +104,7 @@ class Task(Document):
     comments = StringField()
     created_at = DateTimeField(default=ist_now)
     updated_at = DateTimeField(default=ist_now)
+    
 
 
 
@@ -127,37 +128,54 @@ class Certification(Document):
     certificate_url = StringField()
     created_at = DateTimeField(default=ist_now)
 
+from mongoengine import (
+    Document, StringField, DateTimeField, BooleanField,
+    ReferenceField, ListField, EmbeddedDocument, EmbeddedDocumentField, IntField, FloatField
+)
+from datetime import datetime
+
+
 
 class Meeting(Document):
-    employee = ReferenceField(Employe, required=True)
+    meeting_id = StringField(required=True, unique=True)
+    title = StringField(required=True)
     meeting_type = StringField(
         choices=["Team Meeting", "Client Meeting", "One-on-One", "Training"],
         required=True
     )
-    meeting_id = StringField(required=True, unique=True)  # Changed to StringField
-    employee_id = StringField(required=True)
-    title = StringField(required=True)
     description = StringField()
     location = StringField()
     date_time = DateTimeField(required=True)
-    duration_minutes = StringField()  # Optional time slot
+    duration_minutes = IntField()  # Changed from StringField
     link = StringField()
     agenda = StringField()
     notes = StringField()
     status = StringField(default="Scheduled", choices=["Scheduled", "Completed", "Cancelled"])
     is_active = BooleanField(default=True)
+
+    # Relationships
+    employees = ListField(ReferenceField(Employe, required=True))
     created_by = ReferenceField(Admin, required=True)
+
     created_at = DateTimeField(default=ist_now)
-    update_at = DateTimeField(default=ist_now)
-    
-from mongoengine import (
-    Document, StringField, BooleanField,
-    DateTimeField, ReferenceField, IntField
-)
+    updated_at = DateTimeField(default=ist_now)
+
+    meta = {
+        'indexes': [
+            'meeting_id',
+            'date_time',
+            'status',
+            'employees'
+        ]
+    }
+
 
 
 class DocumentUpload(Document):
     employee_id = StringField(required=True)
+    
+    employee = ReferenceField(Employe, required=False)  # 👈 make optional
+
     document_type = StringField(
         required=True,
         choices=[
@@ -277,4 +295,21 @@ class TrainingAndLearning(Document):
     meta = {
         "indexes": ["employee", "training_id"],
         "ordering": ["-start_date"]
+    }
+    
+class RecordingSection(Document):
+    employee = ReferenceField(Employe, required=False, null=True)
+    meeting_record_id = StringField(required=True) 
+    title = StringField(required=True)
+    day= StringField(required=True)  # E.g., "Day 1", "Day 2"
+    date_time= DateTimeField(required=True)  # Date and time of the recording
+    description = StringField()
+    video_url = StringField(required=True)  # URL to the recorded video
+    pdf_name=StringField()  # Duration of the recording in minutes
+    Pdf_url = StringField()  # URL to the associated PDF document
+    created_at = DateTimeField(default=ist_now)
+    updated_at = DateTimeField(default=ist_now)
+    meta = {
+        "indexes": ["employee", "meeting_record_id"],
+        "ordering": ["-created_at"]
     }

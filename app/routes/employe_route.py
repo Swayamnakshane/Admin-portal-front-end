@@ -9,6 +9,12 @@ employee_bp.add_url_rule(
     methods=["POST"]
 )
 
+employee_bp.add_url_rule(
+    "/refresh",
+    view_func=employe_views.EmployeeRefreshAPI.as_view("refresh_api"),
+    methods=["POST"]
+)
+
 
 employee_bp.add_url_rule(
     "/personal-details",
@@ -141,3 +147,9 @@ employee_bp.add_url_rule(
     '/training/my-trainings',
     view_func=employe_views.GetMyTrainings.as_view('get_my_trainings')
     , methods=["GET"])
+
+employee_bp.add_url_rule(
+    '/get-recording',
+    view_func=employe_views.GetEmployeeRecordings.as_view('get_employee_recordings'),
+    methods=["GET"]
+)

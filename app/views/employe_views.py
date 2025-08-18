@@ -2,11 +2,11 @@ from flask import request, jsonify
 from flask.views import MethodView
 from werkzeug.security import generate_password_hash
 from datetime import datetime
-from app.models import Employe, Experience, Task, Meeting, DocumentUpload, EmployeeBankDetails,Timesheet, TimeSlot, TrainingAndLearning
+from app.models import Employe, Experience, Task, Meeting, DocumentUpload, EmployeeBankDetails,Timesheet, TimeSlot, TrainingAndLearning,RecordingSection
 from app.models import ist_now, IST  # Your IST datetime util
 from flask_jwt_extended import create_access_token, create_refresh_token
 
-
+from flask_jwt_extended import jwt_required, get_jwt_identity
 class EmployeeLoginAPI(MethodView):
     def post(self):
         data = request.get_json()
@@ -40,6 +40,15 @@ class EmployeeLoginAPI(MethodView):
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 200
+
+        
+class EmployeeRefreshAPI(MethodView):
+    @jwt_required(refresh=True)
+    def post(self):
+        identity = get_jwt_identity()
+        new_access_token = create_access_token(identity=identity)
+        return jsonify({'access_token': new_access_token}), 200
+
 
 from datetime import datetime
 from flask import request, jsonify
@@ -430,7 +439,8 @@ class GetMeetings(MethodView):
             if not employee:
                 return jsonify({"message": "Employee not found."}), 404
 
-            meetings = Meeting.objects(employee=employee).order_by('-date_time')
+            # ✅ Filter using the list field "employees"
+            meetings = Meeting.objects(employees=employee).order_by('-date_time')
 
             meeting_list = []
             for meeting in meetings:
@@ -460,6 +470,7 @@ class GetMeetings(MethodView):
                 "message": "❌ Error retrieving meetings",
                 "error": str(e)
             }), 500
+
 
 
 class UploadDocumentAPI(MethodView):
@@ -965,5 +976,33 @@ class GetMyTrainings(MethodView):
                 "no_of_days": tr.no_of_days,
                 "status": status
             })
+
+        return jsonify(result), 200
+
+
+    
+class GetEmployeeRecordings(MethodView):
+    @jwt_required()
+    def get(self):
+        user_id = get_jwt_identity()
+        employee = Employe.objects(id=user_id).first()
+        if not employee:
+            return jsonify({"error": "Employee not found"}), 404
+
+        # Fetch all recordings (optionally you can filter by employee if needed)
+        recordings = RecordingSection.objects().order_by("-created_at")
+
+        result = [{
+            "recording_id": str(rec.id),
+            "meeting_record_id": rec.meeting_record_id,
+            "title": rec.title,
+            "day": rec.day,
+            "date_time": rec.date_time.strftime("%d/%m/%Y"),
+            "description": rec.description,
+            "video_url": rec.video_url,
+            "pdf_name": rec.pdf_name,
+            "Pdf_url": rec.Pdf_url,
+            "created_at": rec.created_at.strftime("%d/%m/%Y %H:%M") if rec.created_at else None
+        } for rec in recordings]
 
         return jsonify(result), 200
