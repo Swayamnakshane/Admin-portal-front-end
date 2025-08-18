@@ -11,6 +11,7 @@ import ProjectDashboard from "./Project/project";
 import { Routes, Route } from "react-router-dom";
 import PersonalDetails from "./profile/PersonalDetails";
 import ProfessionalDetails from "./profile/ProfessionalDetails";
+import MeetingRecordings from "./Recording/recording"; // Importing the MeetingRecordings component
 import DashboardHome  from "./Dashboardhome"; // Assuming you have a DashboardHome component
 
 const Dashboard = () => {
@@ -36,6 +37,7 @@ const Dashboard = () => {
           <Route path="timesheet" element={<TimeSheet />} />
           <Route path="training&learning" element={<TrainingLearning/>} />
           <Route path="projects" element={<ProjectDashboard />} />
+          <Route path="recording" element={<MeetingRecordings />} /> {/* Updated path for recordings */}
         </Routes>
       </div>
     </div>

@@ -465,7 +465,7 @@ const TrainingLearning = () => {
                       training={training} 
                     />
                   ))}
-                </div>
+                </div>9
               </div>
             )}
           </Tab.Pane>

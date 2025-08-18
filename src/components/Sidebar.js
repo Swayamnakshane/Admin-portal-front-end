@@ -108,6 +108,11 @@ const Sidebar = () => {
               <i className="bi bi-grid me-2"></i>Projects
             </Link>
           </li>
+          <li className="nav-item mb-2">
+            <Link to="/dashboard/recording" className="nav-link text-white d-flex align-items-center">
+              <i className="bi bi-check-circle me-2"></i>Recording Section
+            </Link>
+          </li>
         </ul>
       </div>
 
