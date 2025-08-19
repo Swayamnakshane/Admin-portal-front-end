@@ -35,10 +35,20 @@ const PersonalDetails = () => {
         const res = await api.get("/employee/get-details");
         if (res.data?.data && Object.keys(res.data.data).length > 0) {
           const data = res.data.data;
-          if (data.date_of_birth && data.date_of_birth.includes("-")) {
-            const [dd, mm, yyyy] = data.date_of_birth.split("-");
-            data.date_of_birth = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+          
+          // Convert backend date (dd/mm/yyyy) to frontend format (yyyy-mm-dd)
+          if (data.date_of_birth && typeof data.date_of_birth === 'string') {
+            if (data.date_of_birth.includes('/')) {
+              const [dd, mm, yyyy] = data.date_of_birth.split('/');
+              data.date_of_birth = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+            }
+            // Handle existing dash format if present
+            else if (data.date_of_birth.includes('-')) {
+              const [dd, mm, yyyy] = data.date_of_birth.split('-');
+              data.date_of_birth = `${yyyy}-${mm.padStart(2, "0")}-${dd.padStart(2, "0")}`;
+            }
           }
+          
           setForm(data);
           setIsExistingData(true);
         }
@@ -81,33 +91,33 @@ const PersonalDetails = () => {
     return true;
   };
 
-  // Remove unused 'res' variable
-// Replace the handleSubmit function with this corrected version
-const handleSubmit = async () => {
-  if (!validateForm()) return;
-  
-  setButtonDisabled(true);
-  const method = isExistingData ? "put" : "post";
-  const endpoint = method === "post" ? "/employee/personal-details" : "/employee/personal-details/update";
+  const handleSubmit = async () => {
+    if (!validateForm()) return;
+    
+    setButtonDisabled(true);
+    const method = isExistingData ? "put" : "post";
+    const endpoint = method === "post" 
+      ? "/employee/personal-details" 
+      : "/employee/personal-details/update";
 
-  // Create formattedForm with properly formatted date
-  const formattedForm = {
-    ...form,
-    date_of_birth: form.date_of_birth
-      ? form.date_of_birth.split("-").reverse().join("-")
-      : ""
+    // Convert date to backend format (yyyy-mm-dd → dd/mm/yyyy)
+    const formattedForm = {
+      ...form,
+      date_of_birth: form.date_of_birth
+        ? form.date_of_birth.split("-").reverse().join("/") // Converts yyyy-mm-dd to dd/mm/yyyy
+        : ""
+    };
+
+    try {
+      await api[method](endpoint, formattedForm);
+      toast.success(`✅ ${isExistingData ? "Details updated" : "Details submitted"} successfully.`);
+      setIsExistingData(true);
+    } catch (err) {
+      toast.error(err.response?.data?.message || "❌ Something went wrong.");
+    } finally {
+      setButtonDisabled(false);
+    }
   };
-
-  try {
-    await api[method](endpoint, formattedForm);
-    toast.success(`✅ ${isExistingData ? "Details updated" : "Details submitted"} successfully.`);
-    setIsExistingData(true);
-  } catch (err) {
-    toast.error(err.response?.data?.message || "❌ Something went wrong.");
-  } finally {
-    setButtonDisabled(false);
-  }
-};
 
   if (isLoading) return <div className="text-center mt-5">Loading personal details...</div>;
 
@@ -118,12 +128,15 @@ const handleSubmit = async () => {
       <form className="row g-3">
         {Object.keys(form).map((key) => (
           <div className="col-md-6" key={key}>
-            <label className="form-label text-capitalize">{key.replace(/_/g, " ")}</label>
+            <label className="form-label text-capitalize">
+              {key.replace(/_/g, " ")}
+              {(key === "date_of_birth" || key === "phone") && <span className="text-danger">*</span>}
+            </label>
 
             {(key === "gender" || key === "marital_status") ? (
               <select
                 name={key}
-                className="form-select"
+                className={`form-select ${errors[key] ? "is-invalid" : ""}`}
                 value={form[key] || ""}
                 onChange={handleChange}
               >
@@ -135,7 +148,7 @@ const handleSubmit = async () => {
             ) : (
               <input
                 name={key}
-                className="form-control"
+                className={`form-control ${errors[key] ? "is-invalid" : ""}`}
                 type={key === "date_of_birth" ? "date" : "text"}
                 value={form[key] || ""}
                 onChange={handleChange}
@@ -143,7 +156,7 @@ const handleSubmit = async () => {
               />
             )}
 
-            {errors[key] && <small className="text-danger">{errors[key]}</small>}
+            {errors[key] && <div className="invalid-feedback">{errors[key]}</div>}
           </div>
         ))}
 
@@ -154,7 +167,16 @@ const handleSubmit = async () => {
             onClick={handleSubmit}
             disabled={buttonDisabled}
           >
-            {isExistingData ? "Update" : "Submit"}
+            {buttonDisabled ? (
+              <span>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Processing...
+              </span>
+            ) : isExistingData ? (
+              "Update"
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </form>

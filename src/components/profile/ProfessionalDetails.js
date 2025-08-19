@@ -20,7 +20,16 @@ const backendToInputDate = (dateStr) => {
   return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
 };
 
-// ... existing imports ...
+// Validation function
+const validateURL = (url) => {
+  if (!url) return true; // Empty URL is acceptable
+  try {
+    new URL(url);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
 
 const ProfessionalDetails = () => {
   // Memoize initial form state
@@ -42,10 +51,7 @@ const ProfessionalDetails = () => {
     portfolio_website: "",
     bio: "",
     previous_experiences: []
-  }), []); // Empty dependency array means it's created only once
-
-  // Rest of the component code remains the same...
-
+  }), []);
 
   const [form, setForm] = useState(initialFormState);
   const [experience, setExperience] = useState({
@@ -60,6 +66,9 @@ const ProfessionalDetails = () => {
   const [isExistingData, setIsExistingData] = useState(false);
   const [buttonDisabled, setButtonDisabled] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [skillsInput, setSkillsInput] = useState("");
+  const [languagesInput, setLanguagesInput] = useState("");
+  const [touchedFields, setTouchedFields] = useState({});
 
   // Fetch existing professional details
   useEffect(() => {
@@ -71,6 +80,8 @@ const ProfessionalDetails = () => {
           const formattedData = {
             ...initialFormState,
             ...res.data.data,
+            // Ensure bio is never null
+            bio: res.data.data.bio || "",
             from_date: backendToInputDate(res.data.data.from_date || ""),
             to_date: backendToInputDate(res.data.data.to_date || ""),
             previous_experiences: (res.data.data.previous_experiences || []).map(exp => ({
@@ -84,13 +95,15 @@ const ProfessionalDetails = () => {
           };
           
           setForm(formattedData);
+          setSkillsInput(formattedData.skills.join(", "));
+          setLanguagesInput(formattedData.languages_known.join(", "));
           setIsExistingData(true);
         }
       } catch (err) {
         if (err.response?.status === 404) {
           console.log("No existing professional details found");
         } else {
-          toast.error("❌ Failed to load professional details");
+          toast.error("❌ Failed to load professional details. Please try again later.");
         }
       } finally {
         setIsLoading(false);
@@ -100,6 +113,29 @@ const ProfessionalDetails = () => {
     fetchDetails();
   }, [initialFormState]);
 
+  // Handle field blur events
+  const handleBlur = (e) => {
+    const { name } = e.target;
+    setTouchedFields(prev => ({ ...prev, [name]: true }));
+    
+    // Validate specific fields on blur
+    if (name === "year_of_passing") {
+      if (!form.year_of_passing) {
+        setErrors(prev => ({ ...prev, year_of_passing: "Graduation year is required" }));
+      } else if (!/^\d{4}$/.test(form.year_of_passing)) {
+        setErrors(prev => ({ ...prev, year_of_passing: "Year must be 4 digits" }));
+      } else if (parseInt(form.year_of_passing) > new Date().getFullYear()) {
+        setErrors(prev => ({ ...prev, year_of_passing: "Year cannot be in the future" }));
+      } else {
+        setErrors(prev => ({ ...prev, year_of_passing: undefined }));
+      }
+    }
+    
+    if (name === "portfolio_website" && form.portfolio_website && !validateURL(form.portfolio_website)) {
+      setErrors(prev => ({ ...prev, portfolio_website: "Please enter a valid URL" }));
+    }
+  };
+
   // Handle main form changes
   const handleFormChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -108,19 +144,38 @@ const ProfessionalDetails = () => {
       [name]: type === "checkbox" ? checked : value
     }));
     
-    // Clear relevant error
+    // Clear relevant error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
 
-  // Handle array fields (skills, languages)
-  const handleArrayChange = (field, value) => {
-    const arr = value.split(",")
-      .map(item => item.trim())
-      .filter(Boolean);
+  // Handle skills input change
+  const handleSkillsChange = (e) => {
+    const value = e.target.value;
+    setSkillsInput(value);
     
-    setForm(prev => ({ ...prev, [field]: arr }));
+    // Parse skills in real-time
+    const skillsArray = value
+      .split(",")
+      .map(skill => skill.trim())
+      .filter(skill => skill !== "");
+    
+    setForm(prev => ({ ...prev, skills: skillsArray }));
+  };
+
+  // Handle languages input change
+  const handleLanguagesChange = (e) => {
+    const value = e.target.value;
+    setLanguagesInput(value);
+    
+    // Parse languages in real-time
+    const languagesArray = value
+      .split(",")
+      .map(lang => lang.trim())
+      .filter(lang => lang !== "");
+    
+    setForm(prev => ({ ...prev, languages_known: languagesArray }));
   };
 
   // Handle experience form changes
@@ -144,6 +199,12 @@ const ProfessionalDetails = () => {
     }
     if (!experience.from_date) {
       newErrors.from_date = "Start date is required";
+    } else if (experience.to_date && new Date(experience.from_date) > new Date(experience.to_date)) {
+      newErrors.from_date = "Start date cannot be after end date";
+    }
+    
+    if (experience.to_date && new Date(experience.to_date) > new Date()) {
+      newErrors.to_date = "End date cannot be in the future";
     }
     
     setErrors(newErrors);
@@ -171,6 +232,8 @@ const ProfessionalDetails = () => {
       from_date: "",
       to_date: ""
     });
+    
+    toast.success("✅ Experience added successfully");
   };
 
   // Validate main form
@@ -188,6 +251,32 @@ const ProfessionalDetails = () => {
       newErrors.year_of_passing = "Year of passing is required";
     } else if (!/^\d{4}$/.test(form.year_of_passing)) {
       newErrors.year_of_passing = "Year must be 4 digits";
+    } else if (parseInt(form.year_of_passing) > new Date().getFullYear()) {
+      newErrors.year_of_passing = "Year cannot be in the future";
+    }
+    
+    // Date validation for current employment
+    if (form.from_date && new Date(form.from_date) > new Date()) {
+      newErrors.from_date = "Start date cannot be in the future";
+    }
+    
+    if (!form.currently_working && form.to_date) {
+      if (new Date(form.to_date) > new Date()) {
+        newErrors.to_date = "End date cannot be in the future";
+      }
+      if (form.from_date && new Date(form.from_date) > new Date(form.to_date)) {
+        newErrors.to_date = "End date cannot be before start date";
+      }
+    }
+    
+    // URL validation
+    if (form.portfolio_website && !validateURL(form.portfolio_website)) {
+      newErrors.portfolio_website = "Please enter a valid URL";
+    }
+    
+    // Bio length validation
+    if (form.bio && form.bio.length > 500) {
+      newErrors.bio = "Professional summary cannot exceed 500 characters";
     }
     
     setErrors(newErrors);
@@ -196,6 +285,18 @@ const ProfessionalDetails = () => {
 
   // Submit form data
   const handleSubmit = async () => {
+    // Mark all fields as touched to show errors
+    const allFields = {
+      education: true,
+      college_name: true,
+      year_of_passing: true,
+      from_date: true,
+      to_date: true,
+      portfolio_website: true,
+      bio: true
+    };
+    setTouchedFields(allFields);
+    
     if (!validateForm()) {
       toast.error("❌ Please fix the errors before submitting");
       return;
@@ -235,7 +336,19 @@ const ProfessionalDetails = () => {
       toast.success(`✅ Professional details ${isExistingData ? "updated" : "saved"} successfully`);
       setIsExistingData(true);
     } catch (err) {
-      const errorMessage = err.response?.data?.message || "Submission failed. Please try again.";
+      let errorMessage = "Submission failed. Please try again.";
+      
+      if (err.response?.data) {
+        if (err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (err.response.data.errors) {
+          // Handle field-specific errors from server
+          const serverErrors = err.response.data.errors;
+          errorMessage = "Please correct the highlighted fields";
+          setErrors(serverErrors);
+        }
+      }
+      
       toast.error(`❌ ${errorMessage}`);
       console.error("Submission error:", err.response?.data);
     } finally {
@@ -252,6 +365,9 @@ const ProfessionalDetails = () => {
     });
     toast.info("Experience removed");
   };
+
+  // Character counter for bio - FIXED
+  const bioCharacterCount = form.bio ? form.bio.length : 0;
 
   if (isLoading) {
     return (
@@ -276,12 +392,13 @@ const ProfessionalDetails = () => {
           <input
             type="text"
             name="education"
-            className={`form-control ${errors.education ? "is-invalid" : ""}`}
+            className={`form-control ${errors.education && touchedFields.education ? "is-invalid" : ""}`}
             value={form.education}
             onChange={handleFormChange}
+            onBlur={handleBlur}
             placeholder="E.g., B.Tech, MBA"
           />
-          {errors.education && (
+          {errors.education && touchedFields.education && (
             <div className="invalid-feedback">{errors.education}</div>
           )}
         </div>
@@ -303,12 +420,13 @@ const ProfessionalDetails = () => {
           <input
             type="text"
             name="college_name"
-            className={`form-control ${errors.college_name ? "is-invalid" : ""}`}
+            className={`form-control ${errors.college_name && touchedFields.college_name ? "is-invalid" : ""}`}
             value={form.college_name}
             onChange={handleFormChange}
+            onBlur={handleBlur}
             placeholder="College/University"
           />
-          {errors.college_name && (
+          {errors.college_name && touchedFields.college_name && (
             <div className="invalid-feedback">{errors.college_name}</div>
           )}
         </div>
@@ -318,13 +436,14 @@ const ProfessionalDetails = () => {
           <input
             type="text"
             name="year_of_passing"
-            className={`form-control ${errors.year_of_passing ? "is-invalid" : ""}`}
+            className={`form-control ${errors.year_of_passing && touchedFields.year_of_passing ? "is-invalid" : ""}`}
             value={form.year_of_passing}
             onChange={handleFormChange}
+            onBlur={handleBlur}
             placeholder="YYYY"
             maxLength="4"
           />
-          {errors.year_of_passing && (
+          {errors.year_of_passing && touchedFields.year_of_passing && (
             <div className="invalid-feedback">{errors.year_of_passing}</div>
           )}
         </div>
@@ -335,11 +454,16 @@ const ProfessionalDetails = () => {
           <input
             type="text"
             className="form-control"
-            value={form.skills.join(", ")}
-            onChange={(e) => handleArrayChange("skills", e.target.value)}
+            value={skillsInput}
+            onChange={handleSkillsChange}
             placeholder="Comma separated (e.g., JavaScript, React, Node.js)"
           />
           <div className="form-text">Add your top 5-10 skills</div>
+          {form.skills.length > 0 && (
+            <div className="mt-2">
+              <small>Detected skills: {form.skills.join(", ")}</small>
+            </div>
+          )}
         </div>
 
         <div className="col-md-6">
@@ -347,10 +471,15 @@ const ProfessionalDetails = () => {
           <input
             type="text"
             className="form-control"
-            value={form.languages_known.join(", ")}
-            onChange={(e) => handleArrayChange("languages_known", e.target.value)}
+            value={languagesInput}
+            onChange={handleLanguagesChange}
             placeholder="Comma separated (e.g., English, Spanish)"
           />
+          {form.languages_known.length > 0 && (
+            <div className="mt-2">
+              <small>Detected languages: {form.languages_known.join(", ")}</small>
+            </div>
+          )}
         </div>
 
         {/* Current Employment */}
@@ -363,14 +492,11 @@ const ProfessionalDetails = () => {
           <input
             type="text"
             name="current_job_title"
-            className={`form-control ${errors.current_job_title ? "is-invalid" : ""}`}
+            className="form-control"
             value={form.current_job_title}
             onChange={handleFormChange}
             placeholder="Your current position"
           />
-          {errors.current_job_title && (
-            <div className="invalid-feedback">{errors.current_job_title}</div>
-          )}
         </div>
 
         <div className="col-md-6">
@@ -402,11 +528,15 @@ const ProfessionalDetails = () => {
           <input
             type="date"
             name="from_date"
-            className="form-control"
+            className={`form-control ${errors.from_date && touchedFields.from_date ? "is-invalid" : ""}`}
             value={form.from_date || ""}
             onChange={handleFormChange}
+            onBlur={handleBlur}
             max={new Date().toISOString().split('T')[0]}
           />
+          {errors.from_date && touchedFields.from_date && (
+            <div className="invalid-feedback">{errors.from_date}</div>
+          )}
         </div>
 
         <div className="col-md-3">
@@ -414,14 +544,15 @@ const ProfessionalDetails = () => {
           <input
             type="date"
             name="to_date"
-            className={`form-control ${errors.to_date ? "is-invalid" : ""}`}
+            className={`form-control ${errors.to_date && touchedFields.to_date ? "is-invalid" : ""}`}
             value={form.to_date || ""}
             onChange={handleFormChange}
+            onBlur={handleBlur}
             disabled={form.currently_working}
             min={form.from_date || undefined}
             max={new Date().toISOString().split('T')[0]}
           />
-          {errors.to_date && (
+          {errors.to_date && touchedFields.to_date && (
             <div className="invalid-feedback">{errors.to_date}</div>
           )}
         </div>
@@ -513,12 +644,15 @@ const ProfessionalDetails = () => {
                       <input
                         type="date"
                         name="to_date"
-                        className="form-control"
+                        className={`form-control ${errors.to_date ? "is-invalid" : ""}`}
                         value={experience.to_date}
                         onChange={handleExperienceChange}
                         min={experience.from_date || undefined}
                         max={new Date().toISOString().split('T')[0]}
                       />
+                      {errors.to_date && (
+                        <div className="invalid-feedback">{errors.to_date}</div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -572,6 +706,7 @@ const ProfessionalDetails = () => {
                         type="button" 
                         className="btn btn-sm btn-outline-danger"
                         onClick={() => removeExperience(idx)}
+                        title="Remove experience"
                       >
                         <i className="bi bi-trash"></i>
                       </button>
@@ -629,11 +764,15 @@ const ProfessionalDetails = () => {
           <input
             type="url"
             name="portfolio_website"
-            className="form-control"
+            className={`form-control ${errors.portfolio_website && touchedFields.portfolio_website ? "is-invalid" : ""}`}
             value={form.portfolio_website}
             onChange={handleFormChange}
+            onBlur={handleBlur}
             placeholder="https://yourportfolio.com"
           />
+          {errors.portfolio_website && touchedFields.portfolio_website && (
+            <div className="invalid-feedback">{errors.portfolio_website}</div>
+          )}
         </div>
 
         {/* Professional Summary */}
@@ -641,13 +780,22 @@ const ProfessionalDetails = () => {
           <label className="form-label fw-semibold">Professional Summary</label>
           <textarea
             name="bio"
-            className="form-control"
+            className={`form-control ${errors.bio && touchedFields.bio ? "is-invalid" : ""}`}
             rows={4}
             value={form.bio}
             onChange={handleFormChange}
+            onBlur={handleBlur}
             placeholder="Describe your professional background, skills, and achievements..."
           />
-          <div className="form-text">Max 500 characters</div>
+          <div className="d-flex justify-content-between">
+            <div className="form-text">Max 500 characters</div>
+            <div className={`form-text ${bioCharacterCount > 500 ? 'text-danger' : ''}`}>
+              {bioCharacterCount}/500
+            </div>
+          </div>
+          {errors.bio && touchedFields.bio && (
+            <div className="invalid-feedback d-block">{errors.bio}</div>
+          )}
         </div>
 
         {/* Submit Section */}
