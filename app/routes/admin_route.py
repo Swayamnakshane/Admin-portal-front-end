@@ -4,8 +4,6 @@ from ..views import admin_views
 admin_bp = Blueprint('admin_bp', __name__) # Removed url_prefix here, it's in app.register_blueprint
 
 
-
-
 admin_bp.add_url_rule(
     "/register",
     view_func=admin_views.RegisterAdmin.as_view("register_admin_api"),
@@ -36,6 +34,18 @@ admin_bp.add_url_rule(
     "/get-all-employe",
     view_func=admin_views.GetAllEmployees.as_view("get_all_employe_api"),
     methods=["GET"]
+)
+
+admin_bp.add_url_rule(
+    "/update-employe/<employee_id>",
+    view_func=admin_views.UpdateEmployee.as_view("update_employe_api"),
+    methods=["PUT"]
+)
+
+admin_bp.add_url_rule(
+    "/delete-employe/<employee_id>",
+    view_func=admin_views.DeleteEmployee.as_view("delete_employe_api"),
+    methods=["DELETE"]
 )
 
 admin_bp.add_url_rule(
@@ -116,15 +126,55 @@ admin_bp.add_url_rule(
 )
 
 
+# admin_bp.add_url_rule(
+#     "/timesheet/<timesheet_id>",
+#     view_func=admin_views.AdminViewSingleTimesheet.as_view("timesheet_api "),
+#     methods=["GET"]
+# )
+
+# admin_bp.add_url_rule(
+#     "/update-timesheet-status/<timesheet_id>",
+#     view_func=admin_views.AdminUpdateTimesheetStatus.as_view("update_timesheet_status_api"),
+#     methods=["PUT"]
+# )
+
+
+
+# =========================
+# Routes for Admin APIs
+# =========================
+
+# Register routes
+admin_bp.add_url_rule(
+    "/get-all-employees",
+    view_func=admin_views.AdminGetAllEmployee.as_view("get_all_employee")
+)
+
+admin_bp.add_url_rule(
+    "/employee/<employee_id>/timesheets",
+    view_func=admin_views.AdminAllEmployeeTimesheets.as_view("admin_all_employee_timesheets")
+)
+
+admin_bp.add_url_rule(
+    "/employee/<employee_id>/timesheets/<int:year>/<int:month>",
+    view_func=admin_views.AdminMonthlyEmployeeTimesheets.as_view("admin_monthly_employee_timesheets")
+)
+
+admin_bp.add_url_rule(
+    "/employee/<string:employee_id>/timesheet/<int:year>/<int:month>/<int:day>",
+    view_func=admin_views.AdminDailyEmployeeTimesheet.as_view("admin_all_timesheets"),
+    methods=["GET"]
+)
+
 admin_bp.add_url_rule(
     "/timesheet/<timesheet_id>",
-    view_func=admin_views.AdminViewSingleTimesheet.as_view("timesheet_api "),
+    view_func=admin_views.AdminViewSingleTimesheet.as_view("admin_view_timesheet"),
     methods=["GET"]
 )
 
 admin_bp.add_url_rule(
     "/update-timesheet-status/<timesheet_id>",
-    view_func=admin_views.AdminUpdateTimesheetStatus.as_view("update_timesheet_status_api"),
+    view_func=admin_views.AdminUpdateTimesheetStatus.as_view("update_timesheet_status"),
     methods=["PUT"]
 )
 

@@ -29,6 +29,15 @@ class EmployeeLoginAPI(MethodView):
         if not employee.password or employee.password != password:
             return jsonify({'message': 'Invalid password.'}), 401
 
+        # ✅ Blocked check
+        if not employee.is_active:
+            return jsonify({
+                'message': 'Your account has been blocked by Admin.',
+                'employee_id': employee.employee_id,
+                'name': employee.name,
+                'is_active': employee.is_active
+            }), 403
+
         # Generate JWT tokens
         access_token = create_access_token(identity=str(employee.id))
         refresh_token = create_refresh_token(identity=str(employee.id))
@@ -37,9 +46,11 @@ class EmployeeLoginAPI(MethodView):
             'message': 'Login successful.',
             'employee_id': employee.employee_id,
             'name': employee.name,
+            'is_active': employee.is_active,
             'access_token': access_token,
             'refresh_token': refresh_token
         }), 200
+
 
         
 class EmployeeRefreshAPI(MethodView):
@@ -337,7 +348,7 @@ class GetEmployeeProfessionalDetails(MethodView):
                 "portfolio_website": employee.portfolio_website,
                 "bio": employee.bio,
             }
-
+ 
             return jsonify({
                 "data": result,
                 "message": "✅ Professional details retrieved."

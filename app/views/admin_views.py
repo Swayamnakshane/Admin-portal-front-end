@@ -161,8 +161,7 @@ class GetAllEmployees(MethodView):
                 'employee_id': emp.employee_id,
                 'name': emp.name,
                 'email': emp.email,
-                'created_at': emp.created_at.strftime("%d-%m-%Y %H:%M:%S"),
-                'updated_at': emp.updated_at.strftime("%d-%m-%Y %H:%M:%S")
+                'is_active': emp.is_active,
             }
             for emp in employees
         ]
@@ -183,11 +182,77 @@ class GetEmployee(MethodView):
             'employee_id': employee.employee_id,
             'name': employee.name,
             'email': employee.email,
-            'created_at': employee.created_at.strftime("%d-%m-%Y %H:%M:%S"),
-            'updated_at': employee.updated_at.strftime("%d-%m-%Y %H:%M:%S")
+            'is_active': employee.is_active,
+            
         }
         return jsonify(employee_data), 200
 
+# ------------------------
+# Update Employee
+# ------------------------
+class UpdateEmployee(MethodView):
+    @jwt_required()
+    def put(self, employee_id):
+        current_user_id = get_jwt_identity()
+
+        # Verify Admin
+        try:
+            admin = Admin.objects.get(id=current_user_id)
+        except Admin.DoesNotExist:
+            return jsonify({'error': 'Admin not found'}), 404
+
+        employee = Employe.objects(employee_id=employee_id).first()
+        if not employee:
+            return jsonify({'error': f'Employee {employee_id} not found'}), 404
+
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No input data provided'}), 400
+
+        # Update allowed fields only
+        update_fields = {}
+        if 'name' in data:
+            update_fields['name'] = data['name']
+        if 'email' in data:
+            # Check for duplicate email
+            if Employe.objects(email=data['email'], id__ne=employee.id).first():
+                return jsonify({'error': 'Email already exists'}), 400
+            update_fields['email'] = data['email']
+        if 'password' in data:
+            update_fields['password'] = data['password']
+        if 'is_active' in data:   # ✅ Allow admin to update active status
+            update_fields['is_active'] = bool(data['is_active'])
+
+        if update_fields:
+            update_fields['updated_at'] = ist_now()
+            employee.update(**update_fields)
+
+        return jsonify({'message': f'Employee {employee_id} updated successfully'}), 200
+
+
+
+# ------------------------
+# Delete Employee (Soft Delete)
+# ------------------------
+class DeleteEmployee(MethodView):
+    @jwt_required()
+    def delete(self, employee_id):
+        current_user_id = get_jwt_identity()
+
+        # Verify Admin
+        try:
+            admin = Admin.objects.get(id=current_user_id)
+        except Admin.DoesNotExist:
+            return jsonify({'error': 'Admin not found'}), 404
+
+        employee = Employe.objects(employee_id=employee_id).first()
+        if not employee:
+            return jsonify({'error': f'Employee {employee_id} not found'}), 404
+
+        # Industry logic → Use Soft Delete instead of permanent delete
+        employee.update(is_verified=False, updated_at=ist_now())
+
+        return jsonify({'message': f'Employee {employee_id} deleted (soft) successfully'}), 200
 
 
 from collections import defaultdict
@@ -1226,3 +1291,267 @@ class GetRecordSection(MethodView):
                     "Pdf_url": r.Pdf_url
                 } for r in records
             ]), 200
+
+# class AdminAllEmployeeTimesheets(MethodView):
+#     @jwt_required()
+#     def get(self, employee_id):
+#         admin = Admin.objects(id=get_jwt_identity()).first()
+#         if not admin:
+#             return jsonify({"error": "Admin not found"}), 404
+
+#         employee = Employe.objects(id=employee_id).first()
+#         if not employee:
+#             return jsonify({"error": "Employee not found"}), 404
+
+#         timesheets = Timesheet.objects(employee=employee).order_by("-date")
+
+#         data = []
+#         for t in timesheets:
+#             data.append({
+#                 "id": str(t.id),
+#                 "date": t.date.strftime("%Y-%m-%d"),
+#                 "total_hours": t.total_hours,
+#                 "status": t.status,
+#                 "remarks": t.remarks,
+#             })
+
+#         return jsonify(data), 200
+
+
+# class AdminMonthlyEmployeeTimesheets(MethodView):
+#     @jwt_required()
+#     def get(self, employee_id, year, month):
+#         admin = Admin.objects(id=get_jwt_identity()).first()
+#         if not admin:
+#             return jsonify({"error": "Admin not found"}), 404
+
+#         employee = Employe.objects(id=employee_id).first()
+#         if not employee:
+#             return jsonify({"error": "Employee not found"}), 404
+
+#         try:
+#             start_date = datetime(int(year), int(month), 1)
+#             if int(month) == 12:
+#                 end_date = datetime(int(year) + 1, 1, 1)
+#             else:
+#                 end_date = datetime(int(year), int(month) + 1, 1)
+#         except Exception:
+#             return jsonify({"error": "Invalid year/month"}), 400
+
+#         timesheets = Timesheet.objects(
+#             employee=employee,
+#             date__gte=start_date,
+#             date__lt=end_date
+#         ).order_by("-date")
+
+#         data = []
+#         for t in timesheets:
+#             data.append({
+#                 "id": str(t.id),
+#                 "date": t.date.strftime("%Y-%m-%d"),
+#                 "total_hours": t.total_hours,
+#                 "status": t.status,
+#                 "remarks": t.remarks,
+#             })
+
+#         return jsonify(data), 200
+
+
+class AdminDailyEmployeeTimesheet(MethodView):
+    @jwt_required()
+    def get(self, employee_id, year, month, day):
+        admin = Admin.objects(id=get_jwt_identity()).first()
+        if not admin:
+            return jsonify({"error": "Admin not found"}), 404
+
+        employee = Employe.objects(id=employee_id).first()
+        if not employee:
+            return jsonify({"error": "Employee not found"}), 404
+
+        try:
+            start_date = datetime(int(year), int(month), int(day))
+            end_date = start_date.replace(hour=23, minute=59, second=59)
+        except Exception:
+            return jsonify({"error": "Invalid date"}), 400
+
+        timesheet = Timesheet.objects(
+            employee=employee,
+            date__gte=start_date,
+            date__lte=end_date
+        ).first()
+
+        if not timesheet:
+            return jsonify({"message": "No timesheet found for this date"}), 404
+
+        timeslot_details = [
+            {
+                "start_time": slot.start_time.strftime("%H:%M"),
+                "end_time": slot.end_time.strftime("%H:%M"),
+                "description": slot.description
+            }
+            for slot in timesheet.time_slots
+        ]
+
+        return jsonify({
+            "id": str(timesheet.id),
+            "employee_id": str(timesheet.employee.id),
+            "date": timesheet.date.strftime("%Y-%m-%d"),
+            
+            "total_hours": timesheet.total_hours,
+            "status": timesheet.status,
+            "remarks": timesheet.remarks,
+            "time_slots": timeslot_details
+        }), 200
+
+
+
+
+# Get all employees
+class AdminGetAllEmployee(MethodView):
+    @jwt_required()
+    def get(self):
+        admin = Admin.objects(id=get_jwt_identity()).first()
+        if not admin:
+            return jsonify({"error": "Admin not found"}), 404
+        
+        employees = Employe.objects.all()
+        data = []
+        for emp in employees:
+            data.append({
+                "_id": str(emp.id),
+                "name": emp.name,
+                "employee_id": emp.employee_id,
+                "email": emp.email
+                })
+        
+        return jsonify(data), 200
+
+# Get all timesheets for an employee
+class AdminAllEmployeeTimesheets(MethodView):
+    @jwt_required()
+    def get(self, employee_id):
+        admin = Admin.objects(id=get_jwt_identity()).first()
+        if not admin:
+            return jsonify({"error": "Admin not found"}), 404
+
+        employee = Employe.objects(id=employee_id).first()
+        if not employee:
+            return jsonify({"error": "Employee not found"}), 404
+
+        timesheets = Timesheet.objects(employee=employee).order_by("-date")
+
+        data = []
+        for t in timesheets:
+            data.append({
+                "id": str(t.id),
+                "date": t.date.strftime("%Y-%m-%d"),
+                "total_hours": t.total_hours,
+                "status": t.status,
+                "remarks": t.remarks,
+            })
+
+        return jsonify(data), 200
+
+# Get monthly timesheets for an employee
+class AdminMonthlyEmployeeTimesheets(MethodView):
+    @jwt_required()
+    def get(self, employee_id, year, month):
+        admin = Admin.objects(id=get_jwt_identity()).first()
+        if not admin:
+            return jsonify({"error": "Admin not found"}), 404
+
+        employee = Employe.objects(id=employee_id).first()
+        if not employee:
+            return jsonify({"error": "Employee not found"}), 404
+
+        try:
+            start_date = datetime(int(year), int(month), 1)
+            if int(month) == 12:
+                end_date = datetime(int(year) + 1, 1, 1)
+            else:
+                end_date = datetime(int(year), int(month) + 1, 1)
+        except Exception:
+            return jsonify({"error": "Invalid year/month"}), 400
+
+        timesheets = Timesheet.objects(
+            employee=employee,
+            date__gte=start_date,
+            date__lt=end_date
+        ).order_by("-date")
+
+        data = []
+        for t in timesheets:
+            data.append({
+                "id": str(t.id),
+                "date": t.date.strftime("%Y-%m-%d"),
+                "total_hours": t.total_hours,
+                "status": t.status,
+                "remarks": t.remarks,
+            })
+
+        return jsonify(data), 200
+
+# Get single timesheet details
+class AdminViewSingleTimesheet(MethodView):
+    @jwt_required()
+    def get(self, timesheet_id):
+        admin = Admin.objects(id=get_jwt_identity()).first()
+        if not admin:
+            return jsonify({"error": "Admin not found"}), 404
+
+        timesheet = Timesheet.objects(id=timesheet_id).first()
+        if not timesheet:
+            return jsonify({"error": "Timesheet not found"}), 404
+
+        timeslot_details = [
+            {
+                "start_time": slot.start_time.strftime("%H:%M"),
+                "end_time": slot.end_time.strftime("%H:%M"),
+                "description": slot.description
+            }
+            for slot in timesheet.time_slots
+        ]
+
+        return jsonify({
+            "id": str(timesheet.id),
+            "employee_id": str(timesheet.employee.id),
+            "date": timesheet.date.strftime("%Y-%m-%d"),
+            "total_hours": timesheet.total_hours,
+            "status": timesheet.status,
+            "remarks": timesheet.remarks,
+            "time_slots": timeslot_details
+        }), 200
+
+# Update timesheet status
+class AdminUpdateTimesheetStatus(MethodView):
+    @jwt_required()
+    def put(self, timesheet_id):
+        admin = Admin.objects(id=get_jwt_identity()).first()
+        if not admin:
+            return jsonify({"error": "Admin not found"}), 404
+
+        data = request.get_json()
+        status = data.get("status")
+        remarks = data.get("remarks", "")
+
+        if status not in ["Pending", "Approved", "Rejected"]:
+            return jsonify({"error": "Invalid status. Must be 'Pending', 'Approved' or 'Rejected'."}), 400
+
+        timesheet = Timesheet.objects(id=timesheet_id).first()
+        if not timesheet:
+            return jsonify({"error": "Timesheet not found"}), 404
+
+        timesheet.status = status
+        timesheet.remarks = remarks
+        
+        if status == "Approved":
+            timesheet.approved_by = admin
+            timesheet.approved_at = datetime.now()
+        elif status == "Rejected":
+            timesheet.rejected_by = admin
+            timesheet.rejected_at = datetime.now()
+            
+        timesheet.updated_at = datetime.now()
+        timesheet.save()
+
+        return jsonify({"message": f"Timesheet {status.lower()} successfully"}), 200
