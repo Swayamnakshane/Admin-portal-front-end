@@ -1,0 +1,225 @@
+/* AuthPage.css */
+.auth-container {
+  height: 100vh;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.auth-card {
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+  overflow: hidden;
+  width: 100%;
+  max-width: 1000px;
+  display: flex;
+  min-height: 600px;
+}
+
+.auth-image-container {
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  width: 45%;
+}
+
+.auth-content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px;
+  width: 55%;
+}
+
+.auth-logo {
+  max-width: 100%;
+  max-height: 100px;
+  
+  margin-bottom: 30px;
+}
+
+.auth-title {
+  font-weight: 800;
+  color: #2c3e50;
+  margin-bottom: 1.5rem;
+  font-size: 2.2rem;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.auth-divider {
+  width: 80px;
+  height: 5px;
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  border-radius: 10px;
+  margin: 0 auto 2rem;
+}
+
+.auth-input {
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 15px 20px;
+  transition: all 0.3s;
+  font-size: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.auth-input:focus {
+  border-color: #6a11cb;
+  box-shadow: 0 0 0 0.25rem rgba(106, 17, 203, 0.15);
+  transform: translateY(-2px);
+}
+
+.auth-btn {
+  background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 15px;
+  font-weight: 700;
+  font-size: 1.1rem;
+  transition: all 0.3s;
+  letter-spacing: 0.5px;
+  box-shadow: 0 5px 15px rgba(106, 17, 203, 0.3);
+  cursor: pointer;
+  margin-top: 1rem;
+}
+
+.auth-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(106, 17, 203, 0.4);
+}
+
+.auth-btn:disabled {
+  background: #bdc3c7;
+  transform: none;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.auth-link-text {
+  color: #7f8c8d;
+  font-weight: 500;
+  text-align: center;
+  margin-top: 2rem;
+}
+
+.auth-link {
+  color: #6a11cb;
+  cursor: pointer;
+  font-weight: 700;
+  transition: all 0.2s;
+  text-decoration: none;
+}
+
+.auth-link:hover {
+  color: #2575fc;
+  text-decoration: underline;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #6a11cb;
+  cursor: pointer;
+}
+
+.input-group {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.invalid-feedback {
+  display: block;
+  color: #e74c3c;
+  font-weight: 500;
+  margin-top: -1rem;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+}
+
+.form-label {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.spinner-border {
+  width: 1.3rem;
+  height: 1.3rem;
+  border-width: 0.2em;
+  margin-right: 0.5rem;
+}
+
+.auth-image-text {
+  color: white;
+  text-align: center;
+  margin-top: 1.5rem;
+}
+
+.auth-image-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.auth-image-subtitle {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Animation for form entry */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.auth-content {
+  animation: fadeIn 0.6s ease-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 992px) {
+  .auth-card {
+    flex-direction: column;
+    max-width: 600px;
+    min-height: auto;
+  }
+  
+  .auth-image-container, .auth-content {
+    width: 100%;
+    padding: 30px;
+  }
+  
+  .auth-image-container {
+    padding-top: 50px;
+    padding-bottom: 30px;
+  }
+}
+
+@media (max-width: 576px) {
+  .auth-title {
+    font-size: 1.8rem;
+  }
+  
+  .auth-content {
+    padding: 25px 15px;
+  }
+  
+  .auth-image-container {
+    padding: 30px 15px;
+  }
+}
