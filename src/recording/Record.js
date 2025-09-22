@@ -54,7 +54,7 @@ const RecordingManagement = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
-  const [modalType, setModalType] = useState('add'); // 'add' or 'edit'
+  const [modalType, setModalType] = useState('add');
   const [selectedRecording, setSelectedRecording] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -62,10 +62,8 @@ const RecordingManagement = () => {
   const [validationErrors, setValidationErrors] = useState({});
   const itemsPerPage = 8;
 
-  // Form ref
   const formRef = useRef();
 
-  // Initial form state
   const initialFormState = {
     meeting_record_id: '',
     title: '',
@@ -79,12 +77,10 @@ const RecordingManagement = () => {
 
   const [formData, setFormData] = useState(initialFormState);
 
-  // Fetch recordings on component mount
   useEffect(() => {
     fetchRecordings();
   }, []);
 
-  // API call to fetch recordings
   const fetchRecordings = async () => {
     try {
       setLoading(true);
@@ -101,7 +97,6 @@ const RecordingManagement = () => {
     }
   };
 
-  // Filter recordings based on search term
   const filteredRecordings = useMemo(() => {
     return recordings.filter(recording => 
       recording.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -110,19 +105,16 @@ const RecordingManagement = () => {
     );
   }, [recordings, searchTerm]);
 
-  // Pagination logic
   const totalPages = Math.ceil(filteredRecordings.length / itemsPerPage);
   const paginatedRecordings = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredRecordings.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredRecordings, currentPage, itemsPerPage]);
 
-  // Handle page change
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
   };
 
-  // Handle modal open for adding new recording
   const handleAddRecording = () => {
     setModalType('add');
     setFormData(initialFormState);
@@ -130,7 +122,6 @@ const RecordingManagement = () => {
     setShowModal(true);
   };
 
-  // Handle modal open for editing recording
   const handleEditRecording = (recording) => {
     setModalType('edit');
     setSelectedRecording(recording);
@@ -148,7 +139,6 @@ const RecordingManagement = () => {
     setShowModal(true);
   };
 
-  // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -156,7 +146,6 @@ const RecordingManagement = () => {
       [name]: value
     }));
     
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
@@ -166,7 +155,6 @@ const RecordingManagement = () => {
     }
   };
 
-  // Validate form
   const validateForm = () => {
     const errors = {};
     
@@ -176,25 +164,10 @@ const RecordingManagement = () => {
     if (!formData.date_time.trim()) errors.date_time = 'Date is required';
     if (!formData.video_url.trim()) errors.video_url = 'Video URL is required';
     
-    // Validate URLs if provided
-    if (formData.Pdf_url && !isValidUrl(formData.Pdf_url)) errors.Pdf_url = 'Please enter a valid URL';
-    if (formData.video_url && !isValidUrl(formData.video_url)) errors.video_url = 'Please enter a valid URL';
-    
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
-  // URL validation helper
-  const isValidUrl = (string) => {
-    try {
-      new URL(string);
-      return true;
-    } catch (_) {
-      return false;
-    }
-  };
-
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -204,17 +177,15 @@ const RecordingManagement = () => {
     
     try {
       if (modalType === 'add') {
-        // Add new recording
         const response = await api.post('/admin/upload-recording', formData);
         toast.success(response.data.message || 'Recording uploaded successfully');
       } else {
-        // Update existing recording
         const response = await api.put(`/admin/update-recording/${selectedRecording.recording_id}`, formData);
         toast.success('Recording updated successfully');
       }
       
       setShowModal(false);
-      fetchRecordings(); // Refresh the list
+      fetchRecordings();
     } catch (err) {
       console.error('Error saving recording:', err);
       const errorMessage = err.response?.data?.message || 'Failed to save recording';
@@ -224,28 +195,10 @@ const RecordingManagement = () => {
     }
   };
 
-  // // Handle delete recording
-  // const handleDeleteRecording = async (recording) => {
-  //   if (window.confirm(`Are you sure you want to delete "${recording.title}"?`)) {
-  //     try {
-  //       // Since there's no delete endpoint in the provided APIs, we'll just show a message
-  //       toast.info('Delete functionality would be implemented here with the appropriate API');
-  //       // In a real implementation, you would call:
-  //       // await api.delete(`/admin/delete-recording/${recording.recording_id}`);
-  //       // fetchRecordings(); // Refresh the list
-  //     } catch (err) {
-  //       console.error('Error deleting recording:', err);
-  //       toast.error('Failed to delete recording');
-  //     }
-  //   }
-  // };
-
-  // Format date for display
   const formatDate = (dateString) => {
     return moment(dateString, 'DD/MM/YYYY').format('MMM DD, YYYY');
   };
 
-  // Reset search
   const clearSearch = () => {
     setSearchTerm('');
     setCurrentPage(1);
@@ -255,7 +208,6 @@ const RecordingManagement = () => {
     <Container fluid className="py-4">
       <ToastContainer position="top-right" autoClose={3000} />
       
-      {/* Header Section */}
       <Row className="mb-4 align-items-center">
         <Col>
           <h2 className="mb-0">Recording Management</h2>
@@ -272,7 +224,6 @@ const RecordingManagement = () => {
         </Col>
       </Row>
 
-      {/* Stats Cards */}
       <Row className="mb-4">
         <Col md={3} className="mb-3">
           <Card className="h-100 shadow-sm">
@@ -342,7 +293,6 @@ const RecordingManagement = () => {
         </Col>
       </Row>
 
-      {/* Search and Filter Section */}
       <Card className="mb-4 shadow-sm">
         <Card.Body>
           <Row className="g-3">
@@ -385,7 +335,6 @@ const RecordingManagement = () => {
         </Card.Body>
       </Card>
 
-      {/* Recordings Table */}
       <Card className="shadow-sm">
         <Card.Body className="p-0">
           {loading ? (
@@ -496,12 +445,6 @@ const RecordingManagement = () => {
                               <Dropdown.Item onClick={() => handleEditRecording(recording)}>
                                 <FaEdit className="me-2" /> Edit
                               </Dropdown.Item>
-                              {/* <Dropdown.Item 
-                                className="text-danger" 
-                                onClick={() => handleDeleteRecording(recording)}
-                              >
-                                <FaTrash className="me-2" /> Delete
-                              </Dropdown.Item> */}
                             </Dropdown.Menu>
                           </Dropdown>
                         </td>
@@ -511,7 +454,6 @@ const RecordingManagement = () => {
                 </Table>
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="d-flex justify-content-between align-items-center p-3 border-top">
                   <div className="text-muted">
@@ -543,7 +485,6 @@ const RecordingManagement = () => {
         </Card.Body>
       </Card>
 
-      {/* Add/Edit Recording Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} size="lg">
         <Form onSubmit={handleSubmit} ref={formRef}>
           <Modal.Header closeButton>
@@ -639,18 +580,18 @@ const RecordingManagement = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
-              <Form.Label>Video URL (Google Drive) *</Form.Label>
+              <Form.Label>Video URL *</Form.Label>
               <InputGroup>
                 <InputGroup.Text>
                   <FaLink />
                 </InputGroup.Text>
                 <Form.Control
-                  type="url"
+                  type="text"
                   name="video_url"
                   value={formData.video_url}
                   onChange={handleInputChange}
                   isInvalid={!!validationErrors.video_url}
-                  placeholder="https://drive.google.com/..."
+                  placeholder="Enter any video link"
                 />
               </InputGroup>
               <Form.Control.Feedback type="invalid">
@@ -670,23 +611,19 @@ const RecordingManagement = () => {
             </Form.Group>
 
             <Form.Group className="mb-0">
-              <Form.Label>PDF URL (Google Drive, Optional)</Form.Label>
+              <Form.Label>PDF URL (Optional)</Form.Label>
               <InputGroup>
                 <InputGroup.Text>
                   <FaLink />
                 </InputGroup.Text>
                 <Form.Control
-                  type="url"
+                  type="text"
                   name="Pdf_url"
                   value={formData.Pdf_url}
                   onChange={handleInputChange}
-                  isInvalid={!!validationErrors.Pdf_url}
-                  placeholder="https://drive.google.com/..."
+                  placeholder="Enter any PDF link"
                 />
               </InputGroup>
-              <Form.Control.Feedback type="invalid">
-                {validationErrors.Pdf_url}
-              </Form.Control.Feedback>
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
